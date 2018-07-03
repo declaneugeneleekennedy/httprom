@@ -3,6 +3,10 @@ defmodule HTTPromTest do
 
   import Mox
 
+  alias HTTPoison.Response
+  alias HTTProm.Instrumenter
+  alias Plug.Conn
+
   setup :set_mox_global
   setup :verify_on_exit!
 
@@ -37,7 +41,7 @@ defmodule HTTPromTest do
     ]
     test "can observe an HTTP request", %{bypass: bypass} do
       Bypass.expect_once bypass, "GET", "/hello", fn conn ->
-        Plug.Conn.resp(conn, 200, "ok")
+        Conn.resp(conn, 200, "ok")
       end
 
       url = "http://localhost:#{bypass.port}/hello"
@@ -69,7 +73,7 @@ defmodule HTTPromTest do
                           end)
       |> expect(:inc, fn [name: :status_ok] -> :ok end)
 
-      HTTProm.Instrumenter.setup()
+      Instrumenter.setup()
 
       HTTProm.get(url)
     end
@@ -86,11 +90,9 @@ defmodule HTTPromTest do
     ]
     test "that setup fails for unknown metrics" do
       assert_raise ArgumentError, "Unknown metric: :unknown", fn ->
-        HTTProm.Instrumenter.setup()
+        Instrumenter.setup()
       end
     end
-
-
 
     @tag config: [
       [
@@ -105,7 +107,7 @@ defmodule HTTPromTest do
     ]
     test "that instrument fails for unknown metrics" do
       assert_raise ArgumentError, "Unknown metric: :unknown", fn ->
-        HTTProm.Instrumenter.instrument(%{result: {:ok, %HTTPoison.Response{}}, time: 0})
+        Instrumenter.instrument(%{result: {:ok, %Response{}}, time: 0})
       end
     end
   end

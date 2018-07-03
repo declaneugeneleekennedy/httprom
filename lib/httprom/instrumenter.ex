@@ -15,10 +15,10 @@ defmodule HTTProm.Instrumenter do
 
   def instrument(%{result: {:ok, %HTTPoison.Response{} = result}, time: time}) do
     Enum.each(metrics(), fn opts ->
-      module = Keyword.fetch!(opts, :module)
+      type   = Keyword.fetch!(opts, :type)
       config = Keyword.fetch!(opts, :config)
+      module = get_module(type, opts)
 
-      type = Keyword.fetch!(opts, :type)
       name = Keyword.fetch!(config, :name)
 
       case type do
@@ -29,8 +29,6 @@ defmodule HTTProm.Instrumenter do
           ])
         :counter ->
           apply(module, :inc, [[name: name]])
-        _ ->
-          raise ArgumentError, "Unknown metric: #{inspect(type)}"
       end
     end)
   end

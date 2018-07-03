@@ -1,0 +1,9 @@
+version: '3'
+services:
+  httprom:
+    build:
+      context: .
+    entrypoint: "tail -f /dev/null"
+    working_dir: /usr/src/httprom
+    volumes:
+      - .:/usr/src/httprom

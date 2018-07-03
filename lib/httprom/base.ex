@@ -19,6 +19,8 @@ defmodule HTTProm.Base do
 
         result
       end
+
+      defoverridable Module.definitions_in(__MODULE__)
     end
   end
 end

@@ -4,18 +4,20 @@ defmodule HTTProm.Base do
   way as HTTPoison.Base.
   """
 
-  defmacro __using__(_) do
+  defmacro __using__(opts) do
     quote do
       use HTTPoison.Base
 
       alias HTTProm.Instrumenter
+
+      @label Keyword.fetch!(unquote(opts), :label)
 
       def request(method, url, body \\ "", headers \\ [], options \\ []) do
         start_time  = :erlang.system_time()
         result      = super(method, url, body, headers, options)
         duration    = :erlang.system_time() - start_time
 
-        Instrumenter.instrument(%{time: duration, result: result})
+        Instrumenter.instrument(%{result: result, time: duration, label: @label})
 
         result
       end

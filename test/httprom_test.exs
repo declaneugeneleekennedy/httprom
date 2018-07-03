@@ -49,7 +49,7 @@ defmodule HTTPromTest do
       HistogramMock
       |> expect(:new, fn [
                           name: :histo_magnifico,
-                          labels: [:method],
+                          labels: [:source, :method],
                           buckets: [100, 300, 500, 750, 1000],
                           help: "Magnificent Histogram"
                         ] ->
@@ -57,7 +57,7 @@ defmodule HTTPromTest do
       end)
       |> expect(:observe, fn [
                               name: :histo_magnifico,
-                              labels: [^url, 200]
+                              labels: [:httprom, ^url, 200]
                             ],
                             time
                             when is_integer(time) ->
@@ -67,11 +67,12 @@ defmodule HTTPromTest do
       CounterMock
       |> expect(:new, fn [
                             name: :status_ok,
-                            help: "Status counter for 200 OK"
+                            help: "Status counter for 200 OK",
+                            labels: [:source]
                         ] ->
                             :ok
                           end)
-      |> expect(:inc, fn [name: :status_ok] -> :ok end)
+      |> expect(:inc, fn [name: :status_ok, labels: [:httprom]] -> :ok end)
 
       Instrumenter.setup()
 
@@ -107,7 +108,7 @@ defmodule HTTPromTest do
     ]
     test "that instrument fails for unknown metrics" do
       assert_raise ArgumentError, "Unknown metric: :unknown", fn ->
-        Instrumenter.instrument(%{result: {:ok, %Response{}}, time: 0})
+        Instrumenter.instrument(%{result: {:ok, %Response{}}, time: 0, label: :httprom})
       end
     end
   end

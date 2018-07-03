@@ -6,14 +6,20 @@ defmodule HTTProm.Instrumenter do
   def setup do
     Enum.each(metrics(), fn opts ->
       type    = Keyword.fetch!(opts, :type)
-      config  = Keyword.fetch!(opts, :config)
       module  = get_module(type, opts)
+
+      config =
+        opts
+        |> Keyword.fetch!(:config)
+        |> Keyword.update(:labels, [:source], fn labels ->
+          [:source | labels]
+        end)
 
       module.new config
     end)
   end
 
-  def instrument(%{result: {:ok, %HTTPoison.Response{} = result}, time: time}) do
+  def instrument(%{result: {:ok, %HTTPoison.Response{} = result}, time: time, label: label}) do
     Enum.each(metrics(), fn opts ->
       type   = Keyword.fetch!(opts, :type)
       config = Keyword.fetch!(opts, :config)
@@ -23,12 +29,9 @@ defmodule HTTProm.Instrumenter do
 
       case type do
         :histogram ->
-          apply(module, :observe, [
-            [name: name, labels: [result.request_url, result.status_code]],
-            time
-          ])
+          module.observe [name: name, labels: [label, result.request_url, result.status_code]], time
         :counter ->
-          apply(module, :inc, [[name: name]])
+          module.inc [name: name, labels: [label]]
       end
     end)
   end
